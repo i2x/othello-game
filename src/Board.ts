@@ -1,8 +1,8 @@
 const boardSize = 8;
 const directions: [number, number][] = [
     [0, 1], [1, 0], [0, -1],
-     [-1, 0],       [1, 1], 
-     [1, -1], [-1, 1], [-1, -1]
+    [-1, 0], [1, 1], [1, -1],
+    [-1, 1], [-1, -1]
 ];
 
 class Board {
@@ -39,7 +39,7 @@ class Board {
             console.log(rowString);
         }
     }
-    
+
     // Check if a cell is empty
     isCellEmpty(x: number, y: number): boolean {
         return this.grid[x][y] === null;

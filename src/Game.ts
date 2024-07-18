@@ -3,18 +3,15 @@ import Player from './Player';
 import readline from 'readline';
 
 class Game {
-    private board: Board;
-    private players: Player[];
-    private currentPlayerIndex: number;
-    private rl: readline.Interface;
+    board: Board;
+    players: Player[];
+    currentPlayerIndex: number;
+    rl: readline.Interface;
 
     constructor() {
-        // Initialize the game board and players
         this.board = new Board();
         this.players = [new Player('B'), new Player('W')];
-        this.currentPlayerIndex = 0; // Start with the first player
-
-        // Initialize the readline interface
+        this.currentPlayerIndex = 0;
         this.rl = readline.createInterface({
             input: process.stdin,
             output: process.stdout
@@ -23,80 +20,84 @@ class Game {
         this.startGame();
     }
 
-    private startGame(): void {
-        // Start the game by rendering the board and prompting the first move
-        this.render();
-        this.promptMove();
+    // Start the game loop
+    startGame(): void {
+        this.nextTurn();
     }
 
-    private render(): void {
-        const currentPlayer = this.players[this.currentPlayerIndex]; // Get the current player
-        const validMoves = this.board.getValidMoves(currentPlayer.color); // Get valid moves for the current player
-        this.board.renderBoard(validMoves); // Render the board with valid moves highlighted
-        console.log(`Current Player: ${currentPlayer.color}`);
-        console.log(`Valid moves: ${validMoves.join(', ')}`);
-    }
-
-    private playMove(input: string): void {
-        const position = parseInt(input.trim()); // Get the position from the input
-        const row = Math.floor((position - 1) / 8); // Calculate the row
-        const col = (position - 1) % 8; // Calculate the column
-        const currentPlayer = this.players[this.currentPlayerIndex]; // Get the current player
-
-        if (this.board.isValidMove(row, col, currentPlayer.color)) {
-            this.board.makeMove(row, col, currentPlayer.color); // Make the move
-            this.switchPlayer(); // Switch to the other player
-            if (!this.board.getValidMoves(this.players[this.currentPlayerIndex].color).length) {
-                // If the next player has no valid moves, switch back
-                this.switchPlayer();
-                if (!this.board.getValidMoves(this.players[this.currentPlayerIndex].color).length) {
-                    // If both players have no valid moves, end the game
-                    this.endGame();
-                    return;
-                }
-            }
-            this.render(); // Render the board after the move
-        } else {
-            console.log('Invalid move. Try again.');
+    // Handle each turn of the game
+    nextTurn(): void {
+        if (this.isEndGame()) {
+            this.endGame();
+            return;
         }
-        this.promptMove(); // Prompt the next move
-    }
 
-    private promptMove(): void {
-        this.rl.question('Enter your move (1-64): ', (input: string) => {
-            this.playMove(input);
+        const currentPlayer = this.players[this.currentPlayerIndex];
+        const validMoves = this.board.getValidMoves(currentPlayer.color);
+
+        if (validMoves.length === 0) {
+            console.log(`${currentPlayer.color} has no valid moves.`);
+            this.currentPlayerIndex = 1 - this.currentPlayerIndex;
+            this.nextTurn();
+            return;
+        }
+
+        this.board.renderBoard(validMoves);
+        this.rl.question(`${currentPlayer.color}, enter your move (1-64): `, (move) => {
+            const moveNum = parseInt(move);
+            if (!validMoves.includes(moveNum)) {
+                console.log('Invalid move. Try again.');
+                this.nextTurn();
+            } else {
+                const [row, col] = this.getMovePosition(moveNum);
+                this.board.makeMove(row, col, currentPlayer.color);
+                this.currentPlayerIndex = 1 - this.currentPlayerIndex;
+                this.nextTurn();
+            }
         });
     }
 
-    private switchPlayer(): void {
-        this.currentPlayerIndex = (this.currentPlayerIndex + 1) % 2; // Switch between players
+    // Convert move position to board coordinates
+    getMovePosition(move: number): [number, number] {
+        const row = Math.floor((move - 1) / 8);
+        const col = (move - 1) % 8;
+        return [row, col];
     }
 
-    private endGame(): void {
-        let blackCount = 0;
-        let whiteCount = 0;
+    // Check if the game has ended
+    isEndGame(): boolean {
+        const validMovesB = this.board.getValidMoves('B');
+        const validMovesW = this.board.getValidMoves('W');
+        const boardIsFull = this.board.grid.flat().every(cell => cell !== null);
+        return boardIsFull || (validMovesB.length === 0 && validMovesW.length === 0);
+    }
 
-        // Count the number of pieces for each player
-        for (let row = 0; row < 8; row++) {
-            for (let col = 0; col < 8; col++) {
-                if (this.board.grid[row][col] === 'B') blackCount++;
-                if (this.board.grid[row][col] === 'W') whiteCount++;
-            }
-        }
-
-        // Display the final scores and announce the winner
-        console.log('Game over!');
-        console.log(`Black: ${blackCount}, White: ${whiteCount}`);
-        if (blackCount > whiteCount) {
-            console.log('Black wins!');
-        } else if (whiteCount > blackCount) {
-            console.log('White wins!');
+    // Handle the end of the game
+    endGame(): void {
+        const score = this.getScore();
+        console.log('Game Over!');
+        console.log(`Final Score - Black (B): ${score.B}, White (W): ${score.W}`);
+        if (score.B > score.W) {
+            console.log('Black (B) wins!');
+        } else if (score.W > score.B) {
+            console.log('White (W) wins!');
         } else {
             console.log('It\'s a tie!');
         }
-
-        // Close the readline interface
         this.rl.close();
+    }
+
+    // Get the current score of the game
+    getScore(): { B: number, W: number } {
+        let scoreB = 0;
+        let scoreW = 0;
+        for (const row of this.board.grid) {
+            for (const cell of row) {
+                if (cell === 'B') scoreB++;
+                if (cell === 'W') scoreW++;
+            }
+        }
+        return { B: scoreB, W: scoreW };
     }
 }
 
