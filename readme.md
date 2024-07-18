@@ -42,16 +42,8 @@ npm install
 Compiles จาก TypeScriptเป็น javscript แล้วรัน `dist/main.js`
 
   
-
 ```sh
 npm  start
 ```
 
-###  `npm test`
 
-รัน unit test สคิปทดสอบอยู่ใน tests/
-  
-
-```sh
-npm  test
-```

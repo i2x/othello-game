@@ -1,5 +1,4 @@
-import Board from './Board';
+import Game from './Game';
 
-const board = new Board();
-board.printBoard();
-
+// Start the game
+new Game();
