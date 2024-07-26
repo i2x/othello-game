@@ -16,25 +16,29 @@ class Board {
 
     // Set up the initial pieces on the board
     private initializeBoard(): void {
-        this.grid[3][3] = 'W'; // White piece
-        this.grid[3][4] = 'B'; // Black piece
-        this.grid[4][3] = 'B'; // Black piece
-        this.grid[4][4] = 'W'; // White piece
+        this.grid[3][3] = '○'; // White piece
+        this.grid[3][4] = '●'; // Black piece
+        this.grid[4][3] = '●'; // Black piece
+        this.grid[4][4] = '○'; // White piece
     }
 
-    // Print the board to the console
-    renderBoard(validMoves: number[]): void {
+    // Print the board to the console with coordinates
+    renderBoard(validMoves: [number, number][]): void {
         console.clear();
-        let position = 1;
+        const cellWidth = 3; // Width of each cell for compact spacing
+        let header = '  ';
+        for (let col = 0; col < boardSize; col++) {
+            header += String.fromCharCode(65 + col).padEnd(cellWidth); // Column headers A-H
+        }
+        console.log(header);
         for (let row = 0; row < boardSize; row++) {
-            let rowString = '';
+            let rowString = (row + 1).toString().padEnd(2); // Row headers 1-8
             for (let col = 0; col < boardSize; col++) {
-                if (validMoves.includes(position)) {
-                    rowString += (position < 10 ? ' ' : '') + position + ' ';
+                if (validMoves.some(([x, y]) => x === row && y === col)) {
+                    rowString += '*'.padEnd(cellWidth); // Mark valid moves with '*'
                 } else {
-                    rowString += ' ' + (this.grid[row][col] || '.') + ' ';
+                    rowString += (this.grid[row][col] || '.').padEnd(cellWidth);
                 }
-                position++;
             }
             console.log(rowString);
         }
@@ -49,7 +53,7 @@ class Board {
     isValidMove(row: number, col: number, player: string): boolean {
         if (!this.isCellEmpty(row, col)) return false;
 
-        const opponent = player === 'B' ? 'W' : 'B';
+        const opponent = player === '●' ? '○' : '●';
 
         for (const [dx, dy] of directions) {
             let x = row + dx;
@@ -97,18 +101,29 @@ class Board {
     }
 
     // Get a list of valid moves for the current player
-    getValidMoves(player: string): number[] {
-        const validMoves: number[] = [];
-        let position = 1;
+    getValidMoves(player: string): [number, number][] {
+        const validMoves: [number, number][] = [];
         for (let row = 0; row < boardSize; row++) {
             for (let col = 0; col < boardSize; col++) {
                 if (this.isValidMove(row, col, player)) {
-                    validMoves.push(position);
+                    validMoves.push([row, col]);
                 }
-                position++;
             }
         }
         return validMoves;
+    }
+
+    // Get the current score of the game
+    getScore(): { '●': number, '○': number } {
+        let scoreB = 0;
+        let scoreW = 0;
+        for (const row of this.grid) {
+            for (const cell of row) {
+                if (cell === '●') scoreB++;
+                if (cell === '○') scoreW++;
+            }
+        }
+        return { '●': scoreB, '○': scoreW };
     }
 }
 

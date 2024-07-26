@@ -10,7 +10,7 @@ class Game {
 
     constructor() {
         this.board = new Board();
-        this.players = [new Player('B'), new Player('W')];
+        this.players = [new Player('●'), new Player('○')];
         this.currentPlayerIndex = 0;
         this.rl = readline.createInterface({
             input: process.stdin,
@@ -43,61 +43,49 @@ class Game {
         }
 
         this.board.renderBoard(validMoves);
-        this.rl.question(`${currentPlayer.color}, enter your move (1-64): `, (move) => {
-            const moveNum = parseInt(move);
-            if (!validMoves.includes(moveNum)) {
+        this.showScore();
+        this.rl.question(`${currentPlayer.color}, enter your move (e.g., D3): `, (move) => {
+            const [col, row] = move.toUpperCase();
+            const colIndex = col.charCodeAt(0) - 65;
+            const rowIndex = parseInt(row) - 1;
+            if (!validMoves.some(([x, y]) => x === rowIndex && y === colIndex)) {
                 console.log('Invalid move. Try again.');
                 this.nextTurn();
             } else {
-                const [row, col] = this.getMovePosition(moveNum);
-                this.board.makeMove(row, col, currentPlayer.color);
+                this.board.makeMove(rowIndex, colIndex, currentPlayer.color);
                 this.currentPlayerIndex = 1 - this.currentPlayerIndex;
                 this.nextTurn();
             }
         });
     }
 
-    // Convert move position to board coordinates
-    getMovePosition(move: number): [number, number] {
-        const row = Math.floor((move - 1) / 8);
-        const col = (move - 1) % 8;
-        return [row, col];
-    }
-
     // Check if the game has ended
     isEndGame(): boolean {
-        const validMovesB = this.board.getValidMoves('B');
-        const validMovesW = this.board.getValidMoves('W');
+        const validMovesB = this.board.getValidMoves('●');
+        const validMovesW = this.board.getValidMoves('○');
         const boardIsFull = this.board.grid.flat().every(cell => cell !== null);
         return boardIsFull || (validMovesB.length === 0 && validMovesW.length === 0);
     }
 
     // Handle the end of the game
     endGame(): void {
-        const score = this.getScore();
+        const score = this.board.getScore();
         console.log('Game Over!');
-        console.log(`Final Score - Black (B): ${score.B}, White (W): ${score.W}`);
-        if (score.B > score.W) {
-            console.log('Black (B) wins!');
-        } else if (score.W > score.B) {
-            console.log('White (W) wins!');
+        console.log(`Final Score - Black (●): ${score['●']}, White (○): ${score['○']}`);
+        if (score['●'] > score['○']) {
+            console.log('Black (●) wins!');
+        } else if (score['○'] > score['●']) {
+            console.log('White (○) wins!');
         } else {
             console.log('It\'s a tie!');
         }
         this.rl.close();
     }
 
-    // Get the current score of the game
-    getScore(): { B: number, W: number } {
-        let scoreB = 0;
-        let scoreW = 0;
-        for (const row of this.board.grid) {
-            for (const cell of row) {
-                if (cell === 'B') scoreB++;
-                if (cell === 'W') scoreW++;
-            }
-        }
-        return { B: scoreB, W: scoreW };
+    // Show the current score of the game
+    showScore(): void {
+        const score = this.board.getScore();
+        console.log(`Current Score - Black (●): ${score['●']}, White (○): ${score['○']}`);
     }
 }
 
