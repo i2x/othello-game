@@ -1,4 +1,3 @@
 import Game from './Game';
 
-// Start the game
-new Game();
+new Game('Human vs Bot');
